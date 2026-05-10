@@ -8,7 +8,7 @@ fn main() -> std::io::Result<()> {
     println!("=== Open-Cognitive Neural Engine (BUS WORKER) Başlatılıyor ===");
     
     // 1. Aynı bellek otobüsüne bağlan
-    let bus = MemoryBus::new("/tmp/cog.bus")?;
+    let mut bus = MemoryBus::new("/tmp/cog.bus")?;
     println!("[SİSTEM] Bellek Otobüsü dinleniyor: /tmp/cog.bus");
 
     loop {
@@ -19,11 +19,14 @@ fn main() -> std::io::Result<()> {
         if signal.command_type == CMD_FORWARD_PASS {
             println!("\n[EMİR ALINDI] Forward Pass tetiklendi! Context: {}", signal.context_length);
             println!("[MATH] Attention mekanizması çalıştırılıyor...");
+            std::thread::sleep(std::time::Duration::from_millis(800));
+            println!("[MATH] Hesaplama tamamlandı.");
             
-            // Burada daha önce yazdığımız math/attention kodlarını çalıştırabiliriz.
-            // Şimdilik simüle ediyoruz:
-            std::thread::sleep(std::time::Duration::from_millis(200));
-            println!("[MATH] Hesaplama tamamlandı. Sonuçlar belleğe yansıtılmaya hazır.");
+            // YENİ EKLENEN KISIM: İşi bitirdiğini belirtmek için belleği temizle
+            let mut ack_signal = signal;
+            ack_signal.command_type = open_cognitive_protocol::CMD_IDLE;
+            bus.write_signal(&ack_signal);
+            println!("[SİSTEM] Otobüs temizlendi (ACK gönderildi). Yeni emir bekleniyor...");
         }
 
         // CPU'yu %100 kullanmamak için kısa bir dinlenme (Polling Interval)
