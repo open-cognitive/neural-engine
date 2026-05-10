@@ -1,42 +1,32 @@
-//! Open-Cognitive: Neural Engine (Sistem 1)
+//! # Open-Cognitive: Neural Engine (Sistem 1) - Bus Worker
 
-// Uyarıları bastırmak için değil, protokolü gelecekte kullanacağımız için import ettik.
-#[allow(unused_imports)]
-use open_cognitive_protocol::{CognitiveSignal, TensorDescriptor, CMD_FORWARD_PASS};
-
-// Matematik modüllerimizi dahil ediyoruz
 mod math;
-use math::tensor::Tensor2D;
-use math::attention::scaled_dot_product_attention;
+use open_cognitive_protocol::{CMD_FORWARD_PASS};
+use open_cognitive_protocol::ipc::MemoryBus;
 
-fn main() {
-    println!("=== Open-Cognitive Neural Engine Başlatılıyor ===");
-    println!("Saf Matematiksel Attention Çekirdeği Test Ediliyor...\n");
-
-    // Basit bir test: 2 kelimelik (token) bir cümle, her kelimenin 3 boyutu (d_k) var.
-    // Query (Arayan), Key (Anahtar), Value (Değer) matrisleri oluşturuluyor.
+fn main() -> std::io::Result<()> {
+    println!("=== Open-Cognitive Neural Engine (BUS WORKER) Başlatılıyor ===");
     
-    let mut q = Tensor2D::zeros(2, 3);
-    q.data = vec![1.0, 0.0, 1.0,   // "Ben" kelimesinin vektörü
-                  0.0, 1.0, 0.0];  // "Kimim" kelimesinin vektörü
+    // 1. Aynı bellek otobüsüne bağlan
+    let bus = MemoryBus::new("/tmp/cog.bus")?;
+    println!("[SİSTEM] Bellek Otobüsü dinleniyor: /tmp/cog.bus");
 
-    // K'nın Transpozu (K^T). Boyutu: 3x2
-    let mut k_t = Tensor2D::zeros(3, 2);
-    k_t.data = vec![1.0, 0.0, 
-                    0.0, 1.0, 
-                    1.0, 0.0];
+    loop {
+        // 2. Belleği oku (Zero-Copy)
+        let signal = bus.read_signal();
 
-    // Value (Değer). Boyutu: 2x3
-    let mut v = Tensor2D::zeros(2, 3);
-    v.data = vec![1.0, 2.0, 3.0, 
-                  4.0, 5.0, 6.0];
+        // 3. Emri değerlendir
+        if signal.command_type == CMD_FORWARD_PASS {
+            println!("\n[EMİR ALINDI] Forward Pass tetiklendi! Context: {}", signal.context_length);
+            println!("[MATH] Attention mekanizması çalıştırılıyor...");
+            
+            // Burada daha önce yazdığımız math/attention kodlarını çalıştırabiliriz.
+            // Şimdilik simüle ediyoruz:
+            std::thread::sleep(std::time::Duration::from_millis(200));
+            println!("[MATH] Hesaplama tamamlandı. Sonuçlar belleğe yansıtılmaya hazır.");
+        }
 
-    // Dikkat formülünü çalıştır
-    let output = scaled_dot_product_attention(&q, &k_t, &v);
-
-    println!("Girdi (Query) Boyutları: {}x{}", q.rows, q.cols);
-    println!("Çıktı (Attention Output) Boyutları: {}x{}", output.rows, output.cols);
-    println!("Hesaplanan Context Vektörü Sonucu:");
-    println!("{:?}", output.data);
-    println!("\nBaşarılı! LLM'lerin sihirli formülü saf Rust ile çalıştırıldı.");
+        // CPU'yu %100 kullanmamak için kısa bir dinlenme (Polling Interval)
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
 }
