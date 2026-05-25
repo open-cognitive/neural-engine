@@ -24,3 +24,6 @@ target
 # Added by cargo
 
 /target
+
+# Model weights and other generated files
+*.cogw

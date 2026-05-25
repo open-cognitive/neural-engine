@@ -3,6 +3,7 @@ name = "neural_engine"
 version = "0.1.0"
 edition = "2021"
 description = "Pure mathematical inference and attention core"
+default-run = "neural_engine"
 
 [dependencies]
 # Kendi yazdığımız protokol kütüphanesi (Yerel yoldan bağlıyoruz)

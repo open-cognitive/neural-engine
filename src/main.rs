@@ -43,13 +43,13 @@ fn main() -> std::io::Result<()> {
             let _output = scaled_dot_product_attention(&q, &k_t, &v);
 
             // 4. MVP Niyet Çıkarımı (İleride Softmax logit'lerine göre yapılacak, şimdilik hibrit)
-            let mut detected_number: i32 = 0;
+            let mut detected_number: i64 = 0; // i32 idi, i64 yapıldı
             let mut intent_found = false;
 
             if prompt.to_lowercase().contains("kare") {
                 intent_found = true;
                 for word in prompt.split_whitespace() {
-                    if let Ok(num) = word.parse::<i32>() {
+                    if let Ok(num) = word.parse::<i64>() { // parse::<i64> yapıldı
                         detected_number = num;
                         break;
                     }
