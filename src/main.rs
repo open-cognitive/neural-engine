@@ -16,7 +16,6 @@ fn argmax(logits: &[f32]) -> usize {
 }
 
 fn compute_intent_logits(prompt: &str) -> [f32; 6] {
-    // 0: Idle, 1: Square, 2: Text, 3: Report, 4: File, 5: Clock
     let mut logits = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]; 
     let p = prompt.to_lowercase();
     
@@ -24,7 +23,7 @@ fn compute_intent_logits(prompt: &str) -> [f32; 6] {
     if p.contains("çevir") || p.contains("metin") { logits[2] += 9.2; }
     if p.contains("rapor") || p.contains("sistem") { logits[3] += 8.9; }
     if p.contains("oku") || p.contains("dosya") { logits[4] += 9.5; }
-    if p.contains("saat") || p.contains("zaman") { logits[5] += 9.7; } // YENİ: Saat niyeti
+    if p.contains("saat") || p.contains("zaman") { logits[5] += 9.7; }
     
     logits
 }
@@ -47,6 +46,9 @@ fn main() -> std::io::Result<()> {
     println!("=== Open-Cognitive Neural Engine Başlatılıyor ===");
     
     let weights = ModelWeights::load("dummy_model.cogw").expect("Model bulunamadı!");
+    let header = weights.header(); // Artık kullanılıyor, uyarı vermeyecek!
+    println!("[SİSTEM] Model Mimarisi Yüklendi -> Dim: {}, Katmanlar: {}", header.model_dim, header.layer_count);
+    
     let mut bus = MemoryBus::new("/tmp/cog.bus")?;
 
     loop {
@@ -72,7 +74,7 @@ fn main() -> std::io::Result<()> {
                     2 => { signal.set_tool_payload_string(TOOL_TEXT_PROCESS, &text_param); },
                     3 => { signal.set_tool_payload_string(TOOL_SYS_REPORT, &text_param); },
                     4 => { signal.set_tool_payload_string(TOOL_READ_FILE, &text_param); },
-                    5 => { signal.set_tool_payload_string(TOOL_CLOCK, "time"); }, // YENİ
+                    5 => { signal.set_tool_payload_string(TOOL_CLOCK, "time"); },
                     _ => {}
                 }
             }
