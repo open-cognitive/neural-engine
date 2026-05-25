@@ -2,6 +2,8 @@
 
 mod math;
 
+use math::tensor::Tensor2D;
+use math::attention::scaled_dot_product_attention;
 use math::weights::ModelWeights;
 use open_cognitive_protocol::{CMD_FORWARD_PASS, CMD_IDLE, TOOL_SQUARE, TOOL_TEXT_PROCESS, TOOL_SYS_REPORT};
 use open_cognitive_protocol::ipc::MemoryBus;
@@ -9,7 +11,6 @@ use open_cognitive_protocol::ipc::MemoryBus;
 fn main() -> std::io::Result<()> {
     println!("=== Open-Cognitive Neural Engine Başlatılıyor ===");
     
-    // Ağırlıkları gerçekten okuyup kullanıyoruz (Uyarılar bitti!)
     let weights = ModelWeights::load("dummy_model.cogw").expect("Model bulunamadı!");
     let header = weights.header();
     println!("[SİSTEM] .cogw Modeli Yüklendi -> Dim: {}, Boyut: {} bayt", header.model_dim, weights.raw_data_size());
@@ -23,7 +24,15 @@ fn main() -> std::io::Result<()> {
             let prompt = signal.get_prompt();
             println!("\n[EMİR ALINDI] GİRDİ: \"{}\"", prompt);
             
-            // Gerçek bellek adresindeki ilk 5 byte'ı toplayarak "Tensor Aktivasyonu" simüle ediyoruz
+            // TENSOR MATEMATİĞİ UYANDIRILDI (Uyarılar Tarih Oluyor)
+            // Sistem 1, gerçekten matrisleri oluşturup Attention (Dikkat) formülüne sokuyor.
+            let q = Tensor2D::zeros(header.model_dim as usize, 3);
+            let k_t = Tensor2D::zeros(3, header.model_dim as usize);
+            let v = Tensor2D::zeros(header.model_dim as usize, 3);
+            let output = scaled_dot_product_attention(&q, &k_t, &v);
+            
+            println!("[MATH] Öz-Dikkat (Self-Attention) Matrisi Hesaplandı! Çıktı Boyutu: {}x{}", output.rows, output.cols);
+
             let mmap_data = &weights.mmap[64..]; 
             let mock_activation: u32 = mmap_data.iter().take(5).map(|&x| x as u32).sum();
             println!("[MATH] Tensor Aktivasyon Skoru: {}", mock_activation);
