@@ -10,3 +10,4 @@ open_cognitive_protocol = { path = "../protocol" }
 
 # Güvenli bellek eşleme (Memory Mapped Files) için
 memmap2 = "0.9.3"
+bytemuck = { version = "1.25.0", features = ["derive"] }
