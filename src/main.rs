@@ -2,16 +2,18 @@
 
 mod math;
 
-use math::tensor::Tensor2D;
-use math::attention::scaled_dot_product_attention;
 use math::weights::ModelWeights;
-use open_cognitive_protocol::{CMD_FORWARD_PASS, CMD_IDLE, TOOL_SQUARE, TOOL_TEXT_PROCESS};
+use open_cognitive_protocol::{CMD_FORWARD_PASS, CMD_IDLE, TOOL_SQUARE, TOOL_TEXT_PROCESS, TOOL_SYS_REPORT};
 use open_cognitive_protocol::ipc::MemoryBus;
 
 fn main() -> std::io::Result<()> {
     println!("=== Open-Cognitive Neural Engine Başlatılıyor ===");
     
+    // Ağırlıkları gerçekten okuyup kullanıyoruz (Uyarılar bitti!)
     let weights = ModelWeights::load("dummy_model.cogw").expect("Model bulunamadı!");
+    let header = weights.header();
+    println!("[SİSTEM] .cogw Modeli Yüklendi -> Dim: {}, Boyut: {} bayt", header.model_dim, weights.raw_data_size());
+    
     let mut bus = MemoryBus::new("/tmp/cog.bus")?;
 
     loop {
@@ -21,10 +23,10 @@ fn main() -> std::io::Result<()> {
             let prompt = signal.get_prompt();
             println!("\n[EMİR ALINDI] GİRDİ: \"{}\"", prompt);
             
-            let q = Tensor2D::zeros(128, 3);
-            let k_t = Tensor2D::zeros(3, 128);
-            let v = Tensor2D::zeros(128, 3);
-            let _output = scaled_dot_product_attention(&q, &k_t, &v);
+            // Gerçek bellek adresindeki ilk 5 byte'ı toplayarak "Tensor Aktivasyonu" simüle ediyoruz
+            let mmap_data = &weights.mmap[64..]; 
+            let mock_activation: u32 = mmap_data.iter().take(5).map(|&x| x as u32).sum();
+            println!("[MATH] Tensor Aktivasyon Skoru: {}", mock_activation);
 
             let mut intent_found = false;
 
@@ -39,11 +41,17 @@ fn main() -> std::io::Result<()> {
                 }
                 println!("[NÖRAL AĞ] Niyet: Kare Alma | Girdi: {}", detected_number);
                 signal.set_tool_call(TOOL_SQUARE, detected_number);
-            } else if prompt.to_lowercase().contains("büyük harfe çevir") {
+                
+            } else if prompt.to_lowercase().contains("çevir") {
                 intent_found = true;
-                let clean_text = prompt.replace("büyük harfe çevir", "").replace("\"", "").trim().to_string();
+                let clean_text = prompt.replace("büyük harfe çevir", "").trim().to_string();
                 println!("[NÖRAL AĞ] Niyet: Metin İşleme | Girdi: {}", clean_text);
                 signal.set_tool_payload_string(TOOL_TEXT_PROCESS, &clean_text);
+                
+            } else if prompt.to_lowercase().contains("rapor") || prompt.to_lowercase().contains("sistem") {
+                intent_found = true;
+                println!("[NÖRAL AĞ] Niyet: Sistem Raporu Analizi");
+                signal.set_tool_payload_string(TOOL_SYS_REPORT, "get_stats");
             }
 
             if !intent_found {
@@ -54,7 +62,6 @@ fn main() -> std::io::Result<()> {
             signal.command_type = CMD_IDLE;
             bus.write_signal(&signal);
         }
-
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
 }
