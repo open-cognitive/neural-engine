@@ -1,5 +1,7 @@
 //! # Cognitive Weights (.cogw) Okuyucu
 
+#![allow(dead_code)] // Gelecek fazdaki matris çarpımları için saklanıyor
+
 use bytemuck::{Pod, Zeroable};
 use memmap2::Mmap;
 use std::fs::File;
@@ -18,7 +20,7 @@ pub struct CogwHeader {
 }
 
 pub struct ModelWeights {
-    pub mmap: Mmap, // Erişimi public yaptık (Uyarıyı çözecek)
+    pub mmap: Mmap,
 }
 
 impl ModelWeights {
