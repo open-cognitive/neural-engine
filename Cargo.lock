@@ -41,6 +41,7 @@ dependencies = [
 name = "neural_engine"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "memmap2",
  "open_cognitive_protocol",
 ]

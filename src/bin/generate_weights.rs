@@ -12,7 +12,8 @@ struct CogwHeader {
     model_dim: u32,
     layer_count: u32,
     dtype: u8,
-    _padding: [u8; 43],
+    _padding1: [u8; 32],
+    _padding2: [u8; 11],
 }
 
 fn main() -> std::io::Result<()> {
@@ -24,7 +25,8 @@ fn main() -> std::io::Result<()> {
         model_dim: 128,
         layer_count: 4,
         dtype: 0, // F32
-        _padding: [0; 43],
+        _padding1: [0; 32],
+        _padding2: [0; 11],
     };
 
     let mut file = File::create("dummy_model.cogw")?;

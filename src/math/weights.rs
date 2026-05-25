@@ -17,11 +17,11 @@ pub struct CogwHeader {
     pub model_dim: u32,      // Modelin tensor boyutu (Örn: 128)
     pub layer_count: u32,    // Katman sayısı
     pub dtype: u8,           // 0: F32, 1: F16
-    pub _padding: [u8; 43],  // 64 Bayta tamamlamak için dolgu
+    pub _padding1: [u8; 32], // 64 Bayta tamamlamak için dolgu (Bölüm 1)
+    pub _padding2: [u8; 11], // 64 Bayta tamamlamak için dolgu (Bölüm 2)
 }
 
 pub struct ModelWeights {
-    // İşletim sisteminden alınan memory-map referansı
     mmap: Mmap,
 }
 
@@ -30,7 +30,6 @@ impl ModelWeights {
         let file = File::open(path)?;
         let mmap = unsafe { Mmap::map(&file)? };
         
-        // Magic number kontrolü
         let header_bytes = &mmap[0..64];
         let header: &CogwHeader = bytemuck::from_bytes(header_bytes);
         
@@ -49,7 +48,6 @@ impl ModelWeights {
         bytemuck::from_bytes(header_bytes)
     }
 
-    /// Bellekten okunan ham ağırlıkları gösterir
     pub fn raw_data_size(&self) -> usize {
         self.mmap.len() - 64
     }
